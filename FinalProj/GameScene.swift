@@ -11,30 +11,57 @@ import GameplayKit
 
 class GameScene: SKScene {
     
+    var contentCreated = false
+    let ScoreHudName = "scoreHud"
+    
     private var label : SKLabelNode?
     private var spinnyNode : SKShapeNode?
     
     override func didMove(to view: SKView) {
         
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
+        if (!self.contentCreated) {
+            self.createContent()
+            self.contentCreated = true
         }
         
         // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
+//        let w = (self.size.width + self.size.height) * 0.05
+//        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
+//
+//        if let spinnyNode = self.spinnyNode {
+//            spinnyNode.lineWidth = 2.5
+//
+//            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
+//            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
+//                                              SKAction.fadeOut(withDuration: 0.5),
+//                                              SKAction.removeFromParent()]))
+//        }
+    }
+    
+    func createContent() {
+        let player = SKSpriteNode(imageNamed: "player")
+        player.position = CGPoint(x: size.width/2, y: size.height/2)
         
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
+        addChild(player)
+        setupHud()
+    }
+    
+    func setupHud() {
+        // 1
+        let scoreLabel = SKLabelNode(fontNamed: "Courier")
+        scoreLabel.name = ScoreHudName
+        scoreLabel.fontSize = 25
+        
+        // 2
+        scoreLabel.fontColor = SKColor.green
+        scoreLabel.text = String(format: "Score: %04u", 0)
+        
+        // 3
+        scoreLabel.position = CGPoint(
+            x: frame.size.width / 2,
+            y: size.height - (scoreLabel.frame.size.height/2)
+        )
+        addChild(scoreLabel)
     }
     
     
