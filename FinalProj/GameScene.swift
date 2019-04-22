@@ -12,7 +12,7 @@ import GameplayKit
 class GameScene: SKScene {
     
     var contentCreated = false
-    let ScoreHudName = "scoreHud"
+    let score = UILabel(frame: CGRect(x: 10, y: 40, width: 230, height: 21))
     
     private var label : SKLabelNode?
     private var spinnyNode : SKShapeNode?
@@ -24,6 +24,9 @@ class GameScene: SKScene {
             self.contentCreated = true
         }
         
+        score.text = "Score: 0"
+        score.textColor = .white
+        self.view?.addSubview(score)
         // Create shape node to use during mouse interaction
 //        let w = (self.size.width + self.size.height) * 0.05
 //        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
@@ -43,27 +46,7 @@ class GameScene: SKScene {
         player.position = CGPoint(x: size.width/2, y: size.height/2)
         
         addChild(player)
-        setupHud()
     }
-    
-    func setupHud() {
-        // 1
-        let scoreLabel = SKLabelNode(fontNamed: "Courier")
-        scoreLabel.name = ScoreHudName
-        scoreLabel.fontSize = 25
-        
-        // 2
-        scoreLabel.fontColor = SKColor.green
-        scoreLabel.text = String(format: "Score: %04u", 0)
-        
-        // 3
-        scoreLabel.position = CGPoint(
-            x: frame.size.width / 2,
-            y: size.height - (scoreLabel.frame.size.height/2)
-        )
-        addChild(scoreLabel)
-    }
-    
     
     func touchDown(atPoint pos : CGPoint) {
         if let n = self.spinnyNode?.copy() as! SKShapeNode? {
