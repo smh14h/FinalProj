@@ -9,10 +9,20 @@
 import SpriteKit
 import GameplayKit
 
+struct PhysicsCategory {
+    static let none      : UInt32 = 0
+    static let all       : UInt32 = UInt32.max
+    static let monster   : UInt32 = 0b1       // 1
+    static let projectile: UInt32 = 0b10      // 2
+}
+
 class GameScene: SKScene {
     
     var contentCreated = false
     let score = UILabel(frame: CGRect(x: 10, y: 40, width: 230, height: 21))
+    let player = SKSpriteNode(imageNamed: "player")
+    var enemies = [SKSpriteNode]()
+    let enemySpeed = CGFloat(1.0)
     
     private var label : SKLabelNode?
     private var spinnyNode : SKShapeNode?
@@ -42,10 +52,53 @@ class GameScene: SKScene {
     }
     
     func createContent() {
-        let player = SKSpriteNode(imageNamed: "player")
         player.position = CGPoint(x: size.width/2, y: size.height/2)
+        addMonster()
         
         addChild(player)
+    }
+    
+    func random() -> CGFloat {
+        return CGFloat(Float(arc4random()) / 0xFFFFFFFF)
+    }
+    
+    func random(min: CGFloat, max: CGFloat) -> CGFloat {
+        return random() * (max - min) + min
+    }
+    
+    func addMonster() {
+        
+        // Create sprite
+        let monster = SKSpriteNode(imageNamed: "enemy")
+        
+        // Determine where to spawn the monster along the Y axis
+        var Y = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
+        
+        // Position the monster slightly off-screen along the right edge,
+        // and along a random position along the Y axis as calculated above
+        monster.position = CGPoint(x: size.width + monster.size.width/2, y: Y)
+        
+        // Add the monster to the scene
+        addChild(monster)
+        enemies.append(monster)
+        
+        let actionMoveDone = SKAction.removeFromParent()
+//        let loseAction = SKAction.run() { [weak self] in
+//            guard let `self` = self else { return }
+//
+//                let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
+//                let gameOverScene = GameOverScene(size: self.size, won: false)
+//                self.view?.presentScene(gameOverScene, transition: reveal)
+//        }
+//        monster.run(SKAction.sequence([actionMove, loseAction, actionMoveDone]))
+        
+        monster.physicsBody = SKPhysicsBody(rectangleOf: monster.size) // 1
+        monster.physicsBody?.isDynamic = true // 2
+        monster.physicsBody?.categoryBitMask = PhysicsCategory.monster // 3
+        monster.physicsBody?.contactTestBitMask = PhysicsCategory.projectile // 4
+        monster.physicsBody?.collisionBitMask = PhysicsCategory.none // 5
+        
+        
     }
     
     func touchDown(atPoint pos : CGPoint) {
@@ -94,6 +147,22 @@ class GameScene: SKScene {
     
     
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
+        let location = player.position
+        
+        for enemy in enemies {
+            //Aim
+            let dx = (location.x) - enemy.position.x
+            let dy = (location.y) - enemy.position.y
+            let angle = atan2(dy, dx)
+            
+            enemy.zRotation = angle - 3 * .pi/2
+            
+            //Seek
+            let velocityX = cos(angle) * enemySpeed
+            let velocityY = sin(angle) * enemySpeed
+            
+            enemy.position.x += velocityX
+            enemy.position.y += velocityY
+        }
     }
 }
