@@ -111,6 +111,7 @@ class GameScene: SKScene {
     }
     
     func createContent() {
+        
         player.position = CGPoint(x: size.width/2, y: size.height/2)
         
         let moveJoystickHiddenArea = TLAnalogJoystickHiddenArea(rect: CGRect(x: 0, y: 0, width: frame.midX / 2, height: frame.midY - 40))
