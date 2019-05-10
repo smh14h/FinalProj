@@ -49,8 +49,6 @@ class GameScene: SKScene {
     let player = SKSpriteNode(imageNamed: "player")
     var enemies = [SKSpriteNode]()
     let enemySpeed = CGFloat(1.0)
-    let jSizePlusSpriteNode = SKSpriteNode(imageNamed: "plus")
-    let jSizeMinusSpriteNode = SKSpriteNode(imageNamed: "minus")
     let moveJoystick = TLAnalogJoystick(withDiameter: 100)
     
     private var label : SKLabelNode?
@@ -87,15 +85,6 @@ class GameScene: SKScene {
             self.player.position = CGPoint(x: self.player.position.x + (pVelocity.x * speed), y: self.player.position.y + (pVelocity.y * speed))
         }
         
-        moveJoystick.on(.end) { [unowned self] _ in
-            let actions = [
-                SKAction.scale(to: 1.5, duration: 0.5),
-                SKAction.scale(to: 1, duration: 0.5)
-            ]
-            
-            self.player.run(SKAction.sequence(actions))
-        }
-        
         score.text = "Score: 0"
         score.textColor = .white
         self.view?.addSubview(score)
@@ -116,7 +105,7 @@ class GameScene: SKScene {
     func createContent() {
         player.position = CGPoint(x: size.width/2, y: size.height/2)
         
-        let moveJoystickHiddenArea = TLAnalogJoystickHiddenArea(rect: CGRect(x: 0, y: 0, width: frame.midX, height: frame.midY))
+        let moveJoystickHiddenArea = TLAnalogJoystickHiddenArea(rect: CGRect(x: 0, y: 0, width: frame.midX / 2, height: frame.midY - 40))
         moveJoystickHiddenArea.joystick = moveJoystick
         moveJoystick.isMoveable = true
         
