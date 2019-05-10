@@ -16,6 +16,32 @@ struct PhysicsCategory {
     static let projectile: UInt32 = 0b10      // 2
 }
 
+func +(left: CGPoint, right: CGPoint) -> CGPoint {
+    return CGPoint(x: left.x + right.x, y: left.y + right.y)
+}
+
+func -(left: CGPoint, right: CGPoint) -> CGPoint {
+    return CGPoint(x: left.x - right.x, y: left.y - right.y)
+}
+
+func *(point: CGPoint, scalar: CGFloat) -> CGPoint {
+    return CGPoint(x: point.x * scalar, y: point.y * scalar)
+}
+
+func /(point: CGPoint, scalar: CGFloat) -> CGPoint {
+    return CGPoint(x: point.x / scalar, y: point.y / scalar)
+}
+
+extension CGPoint {
+    func length() -> CGFloat {
+        return sqrt(x*x + y*y)
+    }
+    
+    func normalized() -> CGPoint {
+        return self / length()
+    }
+}
+
 class GameScene: SKScene {
     
     var contentCreated = false
@@ -23,15 +49,51 @@ class GameScene: SKScene {
     let player = SKSpriteNode(imageNamed: "player")
     var enemies = [SKSpriteNode]()
     let enemySpeed = CGFloat(1.0)
+    let jSizePlusSpriteNode = SKSpriteNode(imageNamed: "plus")
+    let jSizeMinusSpriteNode = SKSpriteNode(imageNamed: "minus")
+    let moveJoystick = TLAnalogJoystick(withDiameter: 100)
     
     private var label : SKLabelNode?
     private var spinnyNode : SKShapeNode?
+    
+    var joystickStickImageEnabled = true {
+        didSet {
+            let image = joystickStickImageEnabled ? UIImage(named: "jStick") : nil
+            moveJoystick.handleImage = image
+        }
+    }
+    
+    var joystickSubstrateImageEnabled = true {
+        didSet {
+            let image = joystickSubstrateImageEnabled ? UIImage(named: "jSubstrate") : nil
+            moveJoystick.baseImage = image
+        }
+    }
     
     override func didMove(to view: SKView) {
         
         if (!self.contentCreated) {
             self.createContent()
             self.contentCreated = true
+        }
+        
+        //MARK: Handlers begin
+        
+        moveJoystick.on(.move) { [unowned self] joystick in
+            
+            let pVelocity = joystick.velocity;
+            let speed = CGFloat(0.12)
+            
+            self.player.position = CGPoint(x: self.player.position.x + (pVelocity.x * speed), y: self.player.position.y + (pVelocity.y * speed))
+        }
+        
+        moveJoystick.on(.end) { [unowned self] _ in
+            let actions = [
+                SKAction.scale(to: 1.5, duration: 0.5),
+                SKAction.scale(to: 1, duration: 0.5)
+            ]
+            
+            self.player.run(SKAction.sequence(actions))
         }
         
         score.text = "Score: 0"
@@ -53,6 +115,12 @@ class GameScene: SKScene {
     
     func createContent() {
         player.position = CGPoint(x: size.width/2, y: size.height/2)
+        
+        let moveJoystickHiddenArea = TLAnalogJoystickHiddenArea(rect: CGRect(x: 0, y: 0, width: frame.midX, height: frame.midY))
+        moveJoystickHiddenArea.joystick = moveJoystick
+        moveJoystick.isMoveable = true
+        
+        addChild(moveJoystickHiddenArea)
         addMonster()
         
         addChild(player)
@@ -72,7 +140,7 @@ class GameScene: SKScene {
         let monster = SKSpriteNode(imageNamed: "enemy")
         
         // Determine where to spawn the monster along the Y axis
-        var Y = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
+        let Y = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
         
         // Position the monster slightly off-screen along the right edge,
         // and along a random position along the Y axis as calculated above
@@ -138,7 +206,42 @@ class GameScene: SKScene {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
+        guard let touch = touches.first else {
+            return
+        }
+        
+        let touchLocation = touch.location(in: self)
+        
+        // 2 - Set up initial location of projectile
+        let projectile = SKSpriteNode(imageNamed: "Rock")
+        projectile.position = player.position
+        
+        projectile.physicsBody = SKPhysicsBody(circleOfRadius: projectile.size.width/2)
+        projectile.physicsBody?.isDynamic = true
+        projectile.physicsBody?.categoryBitMask = PhysicsCategory.projectile
+        projectile.physicsBody?.contactTestBitMask = PhysicsCategory.monster
+        projectile.physicsBody?.collisionBitMask = PhysicsCategory.none
+        projectile.physicsBody?.usesPreciseCollisionDetection = true
+        
+        // 3 - Determine offset of location to projectile
+        let offset = touchLocation - projectile.position
+        
+        // 5 - OK to add now - you've double checked position
+        addChild(projectile)
+        
+        // 6 - Get the direction of where to shoot
+        let direction = offset.normalized()
+        
+        // 7 - Make it shoot far enough to be guaranteed off screen
+        let shootAmount = direction * 1000
+        
+        // 8 - Add the shoot amount to the current position
+        let realDest = shootAmount + projectile.position
+        
+        // 9 - Create the actions
+        let actionMove = SKAction.move(to: realDest, duration: 2.0)
+        let actionMoveDone = SKAction.removeFromParent()
+        projectile.run(SKAction.sequence([actionMove, actionMoveDone]))
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
