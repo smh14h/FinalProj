@@ -12,8 +12,9 @@ import GameplayKit
 struct PhysicsCategory {
     static let none      : UInt32 = 0
     static let all       : UInt32 = UInt32.max
-    static let monster   : UInt32 = 0b1       // 1
-    static let projectile: UInt32 = 0b10      // 2
+    static let player    : UInt32 = 0b11
+    static let monster   : UInt32 = 0b1
+    static let projectile: UInt32 = 0b10
 }
 
 func +(left: CGPoint, right: CGPoint) -> CGPoint {
@@ -45,9 +46,10 @@ extension CGPoint {
 class GameScene: SKScene {
     
     var contentCreated = false
-    let score = UILabel(frame: CGRect(x: 10, y: 40, width: 230, height: 21))
+    var score = UILabel(frame: CGRect(x: 10, y: 40, width: 230, height: 21))
     let player = SKSpriteNode(imageNamed: "player")
     var enemies = [SKSpriteNode]()
+    var enemiesdefeated = 0
     let enemySpeed = CGFloat(1.0)
     let moveJoystick = TLAnalogJoystick(withDiameter: 100)
     
@@ -85,9 +87,8 @@ class GameScene: SKScene {
             self.player.position = CGPoint(x: self.player.position.x + (pVelocity.x * speed), y: self.player.position.y + (pVelocity.y * speed))
         }
         
-        score.text = "Score: 0"
-        score.textColor = .white
-        self.view?.addSubview(score)
+        physicsWorld.gravity = .zero
+        physicsWorld.contactDelegate = self as SKPhysicsContactDelegate
         // Create shape node to use during mouse interaction
 //        let w = (self.size.width + self.size.height) * 0.05
 //        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
@@ -100,6 +101,13 @@ class GameScene: SKScene {
 //                                              SKAction.fadeOut(withDuration: 0.5),
 //                                              SKAction.removeFromParent()]))
 //        }
+        
+        run(SKAction.repeatForever(
+            SKAction.sequence([
+                SKAction.run(addMonster),
+                SKAction.wait(forDuration: 1.0)
+                ])
+        ))
     }
     
     func createContent() {
@@ -113,6 +121,18 @@ class GameScene: SKScene {
         addMonster()
         
         addChild(player)
+        
+        player.physicsBody = SKPhysicsBody(circleOfRadius: player.size.width/5) // 1
+        player.physicsBody?.isDynamic = true // 2
+        player.physicsBody?.categoryBitMask = PhysicsCategory.player // 3
+        player.physicsBody?.contactTestBitMask = PhysicsCategory.monster // 4
+        player.physicsBody?.collisionBitMask = PhysicsCategory.none // 5
+        
+        let keptscore = "Goblins Defeated: 0"
+        score.text = keptscore
+        score.textColor = .white
+        self.view?.addSubview(score)
+        
     }
     
     func random() -> CGFloat {
@@ -126,36 +146,30 @@ class GameScene: SKScene {
     func addMonster() {
         
         // Create sprite
-        let monster = SKSpriteNode(imageNamed: "enemy")
-        
-        // Determine where to spawn the monster along the Y axis
-        let Y = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
-        
-        // Position the monster slightly off-screen along the right edge,
-        // and along a random position along the Y axis as calculated above
-        monster.position = CGPoint(x: size.width + monster.size.width/2, y: Y)
-        
-        // Add the monster to the scene
-        addChild(monster)
-        enemies.append(monster)
-        
-        let actionMoveDone = SKAction.removeFromParent()
-//        let loseAction = SKAction.run() { [weak self] in
-//            guard let `self` = self else { return }
-//
-//                let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
-//                let gameOverScene = GameOverScene(size: self.size, won: false)
-//                self.view?.presentScene(gameOverScene, transition: reveal)
-//        }
-//        monster.run(SKAction.sequence([actionMove, loseAction, actionMoveDone]))
-        
-        monster.physicsBody = SKPhysicsBody(rectangleOf: monster.size) // 1
-        monster.physicsBody?.isDynamic = true // 2
-        monster.physicsBody?.categoryBitMask = PhysicsCategory.monster // 3
-        monster.physicsBody?.contactTestBitMask = PhysicsCategory.projectile // 4
-        monster.physicsBody?.collisionBitMask = PhysicsCategory.none // 5
-        
-        
+        if enemies.isEmpty {
+            for _ in 0...enemiesdefeated {
+            
+                let monster = SKSpriteNode(imageNamed: "enemy")
+                
+                // Determine where to spawn the monster along the Y axis
+                let Y = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
+                
+                // Position the monster slightly off-screen along the right edge,
+                // and along a random position along the Y axis as calculated above
+                monster.position = CGPoint(x: size.width + monster.size.width/2, y: Y)
+                
+                // Add the monster to the scene
+                addChild(monster)
+
+                monster.physicsBody = SKPhysicsBody(circleOfRadius: monster.size.width/5) // 1
+                monster.physicsBody?.isDynamic = true // 2
+                monster.physicsBody?.categoryBitMask = PhysicsCategory.monster // 3
+                monster.physicsBody?.contactTestBitMask = PhysicsCategory.projectile // 4
+                monster.physicsBody?.collisionBitMask = PhysicsCategory.none // 5
+                
+                enemies.append(monster)
+            }
+        }
     }
     
     func touchDown(atPoint pos : CGPoint) {
@@ -255,6 +269,58 @@ class GameScene: SKScene {
             
             enemy.position.x += velocityX
             enemy.position.y += velocityY
+        }
+    }
+    
+    func projectileDidCollideWithMonster(projectile: SKSpriteNode, monster: SKSpriteNode) {
+        
+        print("Hit")
+        projectile.removeFromParent()
+        monster.removeFromParent()
+        if let index = enemies.index(of: monster) {
+            enemies.remove(at: index)
+        }
+        print(enemies)
+        
+        enemiesdefeated += 1
+        score.text = "Goblins Defeated: " + String(enemiesdefeated)
+    }
+    
+    func monsterDidCollideWithPlayer(player: SKSpriteNode, monster: SKSpriteNode) {
+        let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
+        let gameOverScene = GameOverScene(size: self.size, points: enemiesdefeated)
+        view?.presentScene(gameOverScene, transition: reveal)
+    }
+}
+
+extension GameScene: SKPhysicsContactDelegate {
+    func didBegin(_ contact: SKPhysicsContact) {
+        // 1
+        var firstBody: SKPhysicsBody
+        var secondBody: SKPhysicsBody
+        if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask {
+            firstBody = contact.bodyA
+            secondBody = contact.bodyB
+        } else {
+            firstBody = contact.bodyB
+            secondBody = contact.bodyA
+        }
+        
+        if ((firstBody.categoryBitMask & PhysicsCategory.monster != 0) &&
+            (secondBody.categoryBitMask & PhysicsCategory.player != 2)) {
+            if let monster = firstBody.node as? SKSpriteNode,
+                let player = secondBody.node as? SKSpriteNode {
+                monsterDidCollideWithPlayer(player: player, monster: monster)
+            }
+        }
+        
+        // 2
+        if ((firstBody.categoryBitMask & PhysicsCategory.monster != 0) &&
+            (secondBody.categoryBitMask & PhysicsCategory.projectile != 0)) {
+            if let monster = firstBody.node as? SKSpriteNode,
+                let projectile = secondBody.node as? SKSpriteNode {
+                projectileDidCollideWithMonster(projectile: projectile, monster: monster)
+            }
         }
     }
 }

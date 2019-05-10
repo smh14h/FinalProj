@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		25AB7BB72284E5B8008D5B9A /* TLAnalogJoystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AB7BB62284E5B8008D5B9A /* TLAnalogJoystick.swift */; };
+		25AB7BB922857A71008D5B9A /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AB7BB822857A71008D5B9A /* GameOverScene.swift */; };
 		25C6415322675D0000CE3D91 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C6415222675D0000CE3D91 /* AppDelegate.swift */; };
 		25C6415522675D0000CE3D91 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = 25C6415422675D0000CE3D91 /* GameScene.sks */; };
 		25C6415722675D0000CE3D91 /* Actions.sks in Resources */ = {isa = PBXBuildFile; fileRef = 25C6415622675D0000CE3D91 /* Actions.sks */; };
@@ -20,6 +21,7 @@
 
 /* Begin PBXFileReference section */
 		25AB7BB62284E5B8008D5B9A /* TLAnalogJoystick.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TLAnalogJoystick.swift; sourceTree = "<group>"; };
+		25AB7BB822857A71008D5B9A /* GameOverScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
 		25C6414F22675D0000CE3D91 /* FinalProj.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinalProj.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		25C6415222675D0000CE3D91 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		25C6415422675D0000CE3D91 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -69,6 +71,7 @@
 				25AB7BB62284E5B8008D5B9A /* TLAnalogJoystick.swift */,
 				25C6415A22675D0000CE3D91 /* GameViewController.swift */,
 				25C6415C22675D0000CE3D91 /* Main.storyboard */,
+				25AB7BB822857A71008D5B9A /* GameOverScene.swift */,
 				25C6415F22675D0200CE3D91 /* Assets.xcassets */,
 				25C6416122675D0200CE3D91 /* LaunchScreen.storyboard */,
 				25C6416422675D0200CE3D91 /* Info.plist */,
@@ -149,6 +152,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				25AB7BB922857A71008D5B9A /* GameOverScene.swift in Sources */,
 				25C6415922675D0000CE3D91 /* GameScene.swift in Sources */,
 				25C6415B22675D0000CE3D91 /* GameViewController.swift in Sources */,
 				25C6415322675D0000CE3D91 /* AppDelegate.swift in Sources */,
